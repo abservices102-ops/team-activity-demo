@@ -1,1 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overtime Data Entry Automation System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #16213e 50%, #0f3460 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            gap: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(10, 14, 39, 0.95) 0%, rgba(22, 33, 62, 0.95) 50%, rgba(15, 52, 96, 0.95) 100%);
+            position: relative;
+        }
+
+        /* Left Panel: Incoming Data Stream */
+        .data-stream {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 400px;
+        }
+
+        .stream-header {
+            font-size: 18px;
+            font-weight: 600;
+            color: #64b5f6;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(100, 181, 246, 0.1);
+            padding: 12px 16px;
+            border-radius: 8px;
+            border-left: 3px solid #64b5f6;
+        }
+
+        .queue-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 8px;
+        }
+
+        .queue-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .queue-container::-webkit-scrollbar-track {
+            background: rgba(100, 181, 246, 0.1);
+            border-radius: 10px;
+        }
+
+        .queue-container::-webkit-scrollbar-thumb {
+            background: rgba(100, 181, 246, 0.5);
+            border-radius: 10px;
+        }
+
+        .data-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(100, 181, 246, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .data-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(100, 181, 246, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .data-card:hover {
+            background: rgba(100, 181, 246, 0.15);
+            border-color: rgba(100, 181, 246, 0.6);
+            transform: translateX(4px);
+            box-shadow: 0 8px 32px rgba(100, 181, 246, 0.15);
+        }
+
+        .data-card.active {
+            background: rgba(100, 181, 246, 0.25);
+            border-color: #64b5f6;
+            box-shadow: 0 0 20px rgba(100, 181, 246, 0.4);
+        }
+
+        .card-status {
+            display: inline-block;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-status.pending {
+            background: rgba(255, 193, 7, 0.3);
+            color: #ffd54f;
+        }
+
+        .card-status.processing {
+            background: rgba(100, 181, 246, 0.3);
+            color: #64b5f6;
+        }
+
+        .card-status.completed {
+            background: rgba(76, 175, 80, 0.3);
+            color: #81c784;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-employee {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: #ffffff;
+        }
+
+        .card-details {
+            font-size: 12px;
+            color: #b0bec5;
+            line-height: 1.6;
+        }
+
+        /* Right Panel: Verification Form */
+        .verification-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 600px;
+        }
+
+        .form-header {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ba68c8;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(186, 104, 200, 0.1);
+            padding: 12px 16px;
+            border-radius: 8px;
+            border-left: 3px solid #ba68c8;
+        }
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(186, 104, 200, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #64b5f6;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(100, 181, 246, 0.3);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 14px;
+            font-family: 'Segoe UI', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            background: rgba(100, 181, 246, 0.1);
+            border-color: #64b5f6;
+            box-shadow: 0 0 12px rgba(100, 181, 246, 0.3);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #64b5f6 0%, #42a5f5 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(100, 181, 246, 0.4);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(100, 181, 246, 0.6);
+        }
+
+        .btn-reset {
+            background: rgba(255, 255, 255, 0.1);
+            color: #b0bec5;
+            border: 1px solid rgba(176, 190, 197, 0.3);
+        }
+
+        .btn-reset:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(176, 190, 197, 0.6);
+        }
+
+        /* Automation Log Console */
+        .automation-log {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            max-height: 300px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            border-radius: 12px;
+            padding: 16px;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .log-header {
+            font-size: 12px;
+            font-weight: 700;
+            color: #4caf50;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-toggle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(76, 175, 80, 0.3);
+            border: 1px solid #4caf50;
+            color: #4caf50;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .log-toggle:hover {
+            background: rgba(76, 175, 80, 0.5);
+        }
+
+        .log-content {
+            overflow-y: auto;
+            max-height: 250px;
+            font-size: 11px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            line-height: 1.6;
+            color: #81c784;
+        }
+
+        .log-content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .log-content::-webkit-scrollbar-thumb {
+            background: rgba(76, 175, 80, 0.5);
+            border-radius: 4px;
+        }
+
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(76, 175, 80, 0.1);
+        }
+
+        .log-entry.info {
+            color: #64b5f6;
+        }
+
+        .log-entry.success {
+            color: #81c784;
+        }
+
+        .log-entry.error {
+            color: #ef5350;
+        }
+
+        .log-entry.warning {
+            color: #ffd54f;
+        }
+
+        .log-entry::before {
+            content: '▸ ';
+            margin-right: 4px;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 16px;
+            color: #757575;
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            opacity: 0.5;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .data-stream,
+            .verification-panel {
+                max-width: 100%;
+                max-height: 50vh;
+            }
+
+            .automation-log {
+                width: 90%;
+                right: 5%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+                gap: 10px;
+            }
+
+            .automation-log {
+                width: 95%;
+                right: 2.5%;
+                max-height: 200px;
+            }
+
+            .form-container {
+                padding: 16px;
+            }
+        }
+
+        /* Success Animation */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .data-card.success {
+            animation: slideIn 0.3s ease;
+            background: rgba(76, 175, 80, 0.2);
+            border-color: #4caf50;
+        }
+
+        /* Loading pulse */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .data-card.processing {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel: Incoming Data Stream -->
+        <div class="data-stream">
+            <div class="stream-header">📥 Incoming Data Stream</div>
+            <div class="queue-container" id="queue-container">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <div>Waiting for employee overtime data...</div>
+                    <div style="font-size: 12px; color: #999;">The Selenium script will populate this queue</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Verification Form -->
+        <div class="verification-panel">
+            <div class="form-header">✓ Active Verification Form</div>
+            <div class="form-container">
+                <form id="verification-form" onsubmit="handleFormSubmit(event)">
+                    <div class="form-group">
+                        <label for="emp-name">Employee Name</label>
+                        <input type="text" id="emp-name" name="emp-name" placeholder="Enter employee full name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ot-hours">Overtime Hours</label>
+                        <input type="number" id="ot-hours" name="ot-hours" placeholder="Enter number of hours" min="0" max="24" step="0.5" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ot-date">Date of Overtime</label>
+                        <input type="date" id="ot-date" name="ot-date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="project-name">Project/Department</label>
+                        <input type="text" id="project-name" name="project-name" placeholder="e.g., Omni Project, IT Infrastructure" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Additional Notes</label>
+                        <textarea id="notes" name="notes" placeholder="Describe the nature of overtime work..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-submit">Submit Entry</button>
+                        <button type="reset" class="btn btn-reset" onclick="resetForm()">Clear</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Automation Log Console -->
+    <div class="automation-log">
+        <div class="log-header">
+            <span>⚙️ Automation Log</span>
+            <div class="log-toggle" onclick="toggleLog()">−</div>
+        </div>
+        <div class="log-content" id="log-content"></div>
+    </div>
+
+    <script>
+        // ============================================
+        // Global State & Logging System
+        // ============================================
+        let automationState = {
+            queue: [],
+            currentIndex: 0,
+            isCollapsed: false
+        };
+
+        function addLog(message, type = 'info') {
+            const logContent = document.getElementById('log-content');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContent.appendChild(entry);
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+
+        function toggleLog() {
+            const logContent = document.getElementById('log-content');
+            const toggle = document.querySelector('.log-toggle');
+            automationState.isCollapsed = !automationState.isCollapsed;
+            
+            if (automationState.isCollapsed) {
+                logContent.style.display = 'none';
+                toggle.textContent = '+';
+            } else {
+                logContent.style.display = 'block';
+                toggle.textContent = '−';
+            }
+        }
+
+        // ============================================
+        // Queue Management
+        // ============================================
+        function addToQueue(employeeData) {
+            automationState.queue.push(employeeData);
+            renderQueue();
+            addLog(`Added to queue: ${employeeData.name}`, 'info');
+        }
+
+        function renderQueue() {
+            const container = document.getElementById('queue-container');
+            
+            if (automationState.queue.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <div>Waiting for employee overtime data...</div>
+                        <div style="font-size: 12px; color: #999;">The Selenium script will populate this queue</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = automationState.queue.map((item, index) => {
+                let status = 'pending';
+                if (index < automationState.currentIndex) status = 'completed';
+                else if (index === automationState.currentIndex) status = 'processing';
+
+                return `
+                    <div class="data-card ${status}" data-index="${index}">
+                        <div class="card-status ${status}">${status}</div>
+                        <div class="card-content">
+                            <div class="card-employee">${item.name}</div>
+                            <div class="card-details">
+                                <div>⏱️ ${item.hours} hours</div>
+                                <div>📅 ${item.date}</div>
+                                <div>📌 ${item.project}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================
+        // Form Submission Handler
+        // ============================================
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('emp-name').value,
+                hours: document.getElementById('ot-hours').value,
+                date: document.getElementById('ot-date').value,
+                project: document.getElementById('project-name').value,
+                notes: document.getElementById('notes').value
+            };
+
+            addLog(`Form submitted: ${formData.name}`, 'success');
+            addLog(`Processing: ${formData.hours}h on ${formData.date}`, 'success');
+
+            // Simulate form submission success
+            setTimeout(() => {
+                addLog('Form entry saved to database', 'success');
+                automationState.currentIndex++;
+                
+                if (automationState.currentIndex < automationState.queue.length) {
+                    const nextEntry = automationState.queue[automationState.currentIndex];
+                    populateForm(nextEntry);
+                } else if (automationState.queue.length > 0) {
+                    addLog('All queue items processed successfully!', 'success');
+                }
+                
+                renderQueue();
+            }, 300);
+        }
+
+        function resetForm() {
+            document.getElementById('verification-form').reset();
+            addLog('Form cleared by user', 'info');
+        }
+
+        // ============================================
+        // Form Population (Used by Selenium)
+        // ============================================
+        function populateForm(data) {
+            addLog(`Populating form: ${data.name}`, 'info');
+            
+            document.getElementById('emp-name').value = data.name;
+            document.getElementById('ot-hours').value = data.hours;
+            document.getElementById('ot-date').value = data.date;
+            document.getElementById('project-name').value = data.project;
+            document.getElementById('notes').value = data.notes || '';
+            
+            addLog(`✓ Form populated for ${data.name}`, 'success');
+        }
+
+        // ============================================
+        // Public API for Selenium Script
+        // ============================================
+        window.OvertimeAutomation = {
+            addToQueue: addToQueue,
+            populateForm: populateForm,
+            submitForm: () => {
+                document.getElementById('verification-form').dispatchEvent(
+                    new Event('submit', { bubbles: true, cancelable: true })
+                );
+            },
+            addLog: addLog,
+            getQueueLength: () => automationState.queue.length,
+            getCurrentIndex: () => automationState.currentIndex
+        };
+
+        // Initial log message
+        addLog('System initialized and ready', 'info');
+        addLog('Waiting for automation script to connect...', 'info');
+    </script>
+</body>
+</html>
 
