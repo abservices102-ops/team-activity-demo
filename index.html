@@ -3,752 +3,507 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Overtime Data Entry Automation System</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <title>Overtime Data Entry System</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
- 
+
         :root {
-            --primary-dark: #0f0f1e;
-            --secondary-dark: #1a1a2e;
-            --accent-purple: #7c3aed;
-            --accent-blue: #3b82f6;
-            --accent-cyan: #06b6d4;
-            --glow-purple: rgba(124, 58, 237, 0.4);
-            --glow-blue: rgba(59, 130, 246, 0.3);
-            --text-primary: #f0f1f5;
-            --text-secondary: #b0b4c8;
-            --success-green: #10b981;
-            --warning-orange: #f59e0b;
-            --error-red: #ef4444;
+            --primary: #1a3a52;
+            --primary-light: #2d5a7b;
+            --accent: #d9534f;
+            --success: #5cb85c;
+            --border: #e0e0e0;
+            --bg-light: #f8f9fa;
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
         }
- 
-        html, body {
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-        }
- 
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
             color: var(--text-primary);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
- 
-        /* Animated background gradient */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 20% 50%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
-            pointer-events: none;
-            animation: gradientShift 8s ease-in-out infinite;
-            z-index: 0;
-        }
- 
-        @keyframes gradientShift {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
-        }
- 
-        .container {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            height: 100vh;
-            gap: 20px;
+            line-height: 1.6;
+            min-height: 100vh;
             padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
             overflow: hidden;
         }
- 
-        /* Left Panel - Incoming Data Stream */
-        .left-panel {
-            flex: 0 0 35%;
-            display: flex;
-            flex-direction: column;
-            background: rgba(26, 26, 46, 0.5);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(124, 58, 237, 0.2);
-            border-radius: 24px;
-            padding: 24px;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            padding: 40px 30px;
+            color: white;
         }
- 
-        .panel-header {
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 15px;
+            opacity: 0.95;
+            margin-bottom: 20px;
+        }
+
+        .status-bar {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            padding: 12px 16px;
+            font-size: 13px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+            gap: 10px;
         }
- 
-        .panel-header .icon {
-            font-size: 24px;
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+
+        .status-badge {
+            background: var(--success);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
         }
- 
-        .panel-header h2 {
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .section-title {
             font-size: 18px;
             font-weight: 600;
-            letter-spacing: 0.5px;
-        }
- 
-        .stream-counter {
-            margin-left: auto;
-            font-size: 12px;
-            padding: 4px 12px;
-            background: rgba(59, 130, 246, 0.2);
-            border-radius: 20px;
-            color: var(--accent-cyan);
-        }
- 
-        .data-stream {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            padding-right: 8px;
-        }
- 
-        .data-stream::-webkit-scrollbar {
-            width: 6px;
-        }
- 
-        .data-stream::-webkit-scrollbar-track {
-            background: transparent;
-        }
- 
-        .data-stream::-webkit-scrollbar-thumb {
-            background: rgba(124, 58, 237, 0.3);
-            border-radius: 3px;
-        }
- 
-        .data-card {
-            background: rgba(31, 31, 47, 0.8);
-            border: 1px solid rgba(124, 58, 237, 0.3);
-            border-radius: 16px;
-            padding: 16px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            animation: slideIn 0.4s ease-out forwards;
-        }
- 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
- 
-        .data-card:hover {
-            background: rgba(31, 31, 47, 1);
-            border-color: rgba(124, 58, 237, 0.6);
-            box-shadow: 0 8px 24px var(--glow-purple);
-            transform: translateX(4px);
-        }
- 
-        .data-card.active {
-            background: rgba(124, 58, 237, 0.15);
-            border-color: var(--accent-purple);
-            box-shadow: 0 0 20px var(--glow-purple);
-        }
- 
-        .card-content {
-            display: grid;
-            gap: 8px;
-        }
- 
-        .card-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 13px;
-        }
- 
-        .card-label {
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
- 
-        .card-value {
-            color: var(--text-primary);
-            font-weight: 600;
-            font-family: 'Courier New', monospace;
-        }
- 
-        .card-status {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--warning-orange);
-            animation: pulse 2s ease-in-out infinite;
-        }
- 
-        .card-status.completed {
-            background: var(--success-green);
-            animation: none;
-        }
- 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
- 
-        /* Right Panel - Active Verification Form */
-        .right-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: rgba(26, 26, 46, 0.5);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            border-radius: 24px;
-            padding: 32px;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
- 
-        .form-header {
+            margin-bottom: 25px;
+            color: var(--primary);
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 28px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+            gap: 10px;
         }
- 
-        .form-header .icon {
-            font-size: 28px;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
- 
-        .form-header h2 {
-            font-size: 20px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
- 
-        .form-section {
-            flex: 1;
-            overflow-y: auto;
-            padding-right: 8px;
-        }
- 
-        .form-section::-webkit-scrollbar {
-            width: 6px;
-        }
- 
-        .form-section::-webkit-scrollbar-track {
-            background: transparent;
-        }
- 
-        .form-section::-webkit-scrollbar-thumb {
-            background: rgba(59, 130, 246, 0.3);
-            border-radius: 3px;
-        }
- 
-        .form-group {
-            margin-bottom: 24px;
-            animation: fadeIn 0.4s ease-out;
-        }
- 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
- 
-        .form-label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
- 
-        .form-input, .form-textarea {
-            width: 100%;
-            padding: 12px 16px;
-            background: rgba(15, 15, 30, 0.6);
-            border: 1.5px solid rgba(59, 130, 246, 0.2);
-            border-radius: 12px;
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            outline: none;
-        }
- 
-        .form-input:focus, .form-textarea:focus {
-            background: rgba(15, 15, 30, 0.8);
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
-        }
- 
-        .form-textarea {
-            resize: vertical;
-            min-height: 100px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-        }
- 
-        .form-input::placeholder, .form-textarea::placeholder {
-            color: var(--text-secondary);
-        }
- 
-        .form-footer {
-            display: flex;
-            gap: 12px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(59, 130, 246, 0.2);
-        }
- 
-        .btn {
-            flex: 1;
-            padding: 14px 24px;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            position: relative;
-            overflow: hidden;
-        }
- 
-        .btn::before {
+
+        .section-title::before {
             content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
+            display: block;
+            width: 4px;
+            height: 24px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-light);
+        }
+
+        table {
             width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.2);
-            transition: left 0.3s ease;
-            z-index: -1;
+            border-collapse: collapse;
+            background: white;
         }
- 
-        .btn:hover::before {
-            left: 100%;
+
+        thead {
+            background: var(--bg-light);
+            border-bottom: 2px solid var(--border);
         }
- 
+
+        th {
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: #fafbfc;
+        }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        td {
+            padding: 16px 12px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            color: var(--text-primary);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26, 58, 82, 0.1);
+        }
+
+        .input-field::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: #e8ecf1;
+            border-color: var(--primary);
+        }
+
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            background: var(--primary);
             color: white;
-            box-shadow: 0 4px 16px var(--glow-purple);
+            flex-grow: 1;
+            max-width: 300px;
         }
- 
+
         .btn-primary:hover {
+            background: var(--primary-light);
+            box-shadow: var(--shadow-md);
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px var(--glow-purple);
         }
- 
+
         .btn-primary:active {
             transform: translateY(0);
         }
- 
-        .btn-secondary {
-            background: transparent;
-            color: var(--accent-blue);
-            border: 1.5px solid var(--accent-blue);
+
+        .btn-primary.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
- 
-        .btn-secondary:hover {
-            background: rgba(59, 130, 246, 0.1);
-            border-color: var(--accent-cyan);
-            color: var(--accent-cyan);
+
+        .btn-primary.disabled:hover {
+            background: var(--primary);
+            transform: none;
         }
- 
-        /* Automation Log Overlay */
-        .automation-log-overlay {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 400px;
-            max-height: 300px;
-            background: rgba(15, 15, 30, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1.5px solid rgba(16, 185, 129, 0.3);
-            border-radius: 16px;
+
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid var(--primary);
             padding: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-            animation: slideInRight 0.3s ease-out;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            font-size: 13px;
+            color: var(--text-primary);
+            line-height: 1.6;
         }
- 
-        @keyframes slideInRight {
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        .row-number {
+            text-align: center;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 13px;
+            min-width: 40px;
+        }
+
+        .footer {
+            background: var(--bg-light);
+            border-top: 1px solid var(--border);
+            padding: 30px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            th, td {
+                padding: 12px 8px;
+                font-size: 13px;
+            }
+
+            .input-field {
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+
+            button {
+                padding: 10px 20px;
+                font-size: 13px;
+            }
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-top: 20px;
+            border: 1px solid #c3e6cb;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
             from {
                 opacity: 0;
-                transform: translateX(20px);
+                transform: translateY(-10px);
             }
             to {
                 opacity: 1;
-                transform: translateX(0);
-            }
-        }
- 
-        .automation-log-overlay.active {
-            display: flex;
-        }
- 
-        .log-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(16, 185, 129, 0.2);
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--success-green);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
- 
-        .log-header .spinner {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border: 2px solid rgba(16, 185, 129, 0.3);
-            border-top-color: var(--success-green);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
- 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
- 
-        .log-content {
-            flex: 1;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            line-height: 1.6;
-            color: var(--text-secondary);
-        }
- 
-        .log-content::-webkit-scrollbar {
-            width: 4px;
-        }
- 
-        .log-content::-webkit-scrollbar-thumb {
-            background: rgba(16, 185, 129, 0.2);
-            border-radius: 2px;
-        }
- 
-        .log-entry {
-            margin-bottom: 6px;
-            word-break: break-all;
-            animation: logEntryFade 0.3s ease-out;
-        }
- 
-        @keyframes logEntryFade {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
- 
-        .log-entry.info {
-            color: var(--accent-cyan);
-        }
- 
-        .log-entry.success {
-            color: var(--success-green);
-        }
- 
-        .log-entry.error {
-            color: var(--error-red);
-        }
- 
-        .log-entry.warning {
-            color: var(--warning-orange);
-        }
- 
-        .log-timestamp {
-            color: var(--text-secondary);
-            font-size: 10px;
-            margin-right: 4px;
-        }
- 
-        /* Responsive Design */
-        @media (max-width: 1400px) {
-            .container {
-                gap: 16px;
-                padding: 16px;
-            }
- 
-            .left-panel, .right-panel {
-                padding: 20px;
-            }
- 
-            .automation-log-overlay {
-                width: 300px;
-                max-height: 250px;
-                bottom: 16px;
-                right: 16px;
-            }
-        }
- 
-        @media (max-width: 1000px) {
-            .container {
-                flex-direction: column;
-            }
- 
-            .left-panel {
-                flex: 0 0 auto;
-                max-height: 40%;
-            }
- 
-            .right-panel {
-                flex: 1;
-            }
- 
-            .automation-log-overlay {
-                width: calc(100% - 40px);
-                max-height: 150px;
+                transform: translateY(0);
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Left Panel: Incoming Data Stream -->
-        <div class="left-panel">
-            <div class="panel-header">
-                <i class="fas fa-stream icon"></i>
-                <h2>Incoming Data Stream</h2>
-                <span class="stream-counter"><span id="card-count">0</span> pending</span>
+        <div class="header">
+            <h1>Overtime Data Entry System</h1>
+            <p>Batch employee overtime recording and management</p>
+            <div class="status-bar">
+                <span>System Status:</span>
+                <span class="status-badge">Ready</span>
             </div>
-            <div class="data-stream" id="dataStream"></div>
         </div>
- 
-        <!-- Right Panel: Active Verification Form -->
-        <div class="right-panel">
-            <div class="form-header">
-                <i class="fas fa-check-circle icon"></i>
-                <h2>Active Verification Form</h2>
+
+        <div class="content">
+            <div class="info-box">
+                <strong>Instructions:</strong>
+                Enter employee overtime records in the table below. Each row represents one employee's overtime entry. 
+                All fields are required. After verification, click the "Final Submit Data" button to save all records.
             </div>
-            <form class="form-section" id="activityForm">
-                <div class="form-group">
-                    <label class="form-label">Employee Name</label>
-                    <input type="text" class="form-input" id="emp-name" placeholder="e.g., John Doe" required>
+
+            <div class="form-group">
+                <h2 class="section-title">Overtime Records</h2>
+
+                <div class="table-wrapper">
+                    <table id="overtime-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">#</th>
+                                <th style="width: 20%;">Employee Name</th>
+                                <th style="width: 12%;">OT Hours</th>
+                                <th style="width: 15%;">Date</th>
+                                <th style="width: 20%;">Project Name</th>
+                                <th style="width: 33%;">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <!-- Rows will be dynamically inserted here -->
+                        </tbody>
+                    </table>
                 </div>
- 
-                <div class="form-group">
-                    <label class="form-label">Overtime Hours</label>
-                    <input type="number" class="form-input" id="ot-hours" placeholder="e.g., 3" step="0.5" required>
-                </div>
- 
-                <div class="form-group">
-                    <label class="form-label">Date of Activity</label>
-                    <input type="date" class="form-input" id="ot-date" required>
-                </div>
- 
-                <div class="form-group">
-                    <label class="form-label">Project / Assignment</label>
-                    <input type="text" class="form-input" id="project-name" placeholder="e.g., Omni Project" required>
-                </div>
- 
-                <div class="form-group">
-                    <label class="form-label">Notes / Description</label>
-                    <textarea class="form-textarea" id="notes" placeholder="e.g., Post-hours technical support"></textarea>
-                </div>
- 
-                <div class="form-footer">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Submit Entry
-                    </button>
-                    <button type="reset" class="btn btn-secondary">
-                        <i class="fas fa-redo" style="margin-right: 8px;"></i>Clear Form
-                    </button>
-                </div>
-            </form>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-secondary" id="add-row-btn">+ Add Row</button>
+                <button class="btn-secondary" id="remove-row-btn">− Remove Row</button>
+                <button class="btn-primary" id="submit-btn">Final Submit Data</button>
+            </div>
+
+            <div class="success-message" id="success-msg">
+                ✓ All records submitted successfully!
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Overtime Data Entry System v1.0 | Secure Form Processing</p>
         </div>
     </div>
- 
-    <!-- Automation Log Overlay -->
-    <div class="automation-log-overlay" id="automationLog">
-        <div class="log-header">
-            <span class="spinner"></span>
-            <span>Automation Log</span>
-        </div>
-        <div class="log-content" id="logContent"></div>
-    </div>
- 
+
     <script>
-        // Global state for demo
-        let currentRecordIndex = 0;
-        let demoRecords = [];
- 
-        // Automation log system
-        const automationLog = {
-            element: document.getElementById('automationLog'),
-            content: document.getElementById('logContent'),
-            isActive: false,
- 
-            show() {
-                this.element.classList.add('active');
-                this.isActive = true;
-            },
- 
-            hide() {
-                this.element.classList.remove('active');
-                this.isActive = false;
-                this.content.innerHTML = '';
-            },
- 
-            log(message, type = 'info') {
-                if (!this.isActive) this.show();
-                
-                const timestamp = new Date().toLocaleTimeString();
-                const entry = document.createElement('div');
-                entry.className = `log-entry ${type}`;
-                entry.innerHTML = `<span class="log-timestamp">[${timestamp}]</span>${message}`;
-                
-                this.content.appendChild(entry);
-                this.content.scrollTop = this.content.scrollHeight;
+        const INITIAL_ROWS = 5;
+        const tableBody = document.getElementById('table-body');
+        const addRowBtn = document.getElementById('add-row-btn');
+        const removeRowBtn = document.getElementById('remove-row-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const successMsg = document.getElementById('success-msg');
+
+        // Initialize table with initial rows
+        function initializeTable() {
+            tableBody.innerHTML = '';
+            for (let i = 1; i <= INITIAL_ROWS; i++) {
+                addTableRow(i);
             }
-        };
- 
-        // Simulate incoming data stream
-        function initializeDemoData() {
-            demoRecords = [
-                { name: 'John Doe', hours: 3, date: '2024-05-25', project: 'Omni Project', notes: 'Post-hours technical support' },
-                { name: 'Sarah Smith', hours: 2.5, date: '2024-05-26', project: 'Analytics Portal', notes: 'Database optimization' },
-                { name: 'Mike Johnson', hours: 4, date: '2024-05-27', project: 'Mobile App', notes: 'Bug fixes and testing' },
-                { name: 'Emma Wilson', hours: 2, date: '2024-05-28', project: 'API Integration', notes: 'Endpoint configuration' },
-                { name: 'David Chen', hours: 3.5, date: '2024-05-29', project: 'Dashboard Redesign', notes: 'UI implementation' }
-            ];
- 
-            populateDataStream();
         }
- 
-        // Populate the data stream with cards
-        function populateDataStream() {
-            const dataStream = document.getElementById('dataStream');
-            const cardCount = document.getElementById('card-count');
- 
-            dataStream.innerHTML = '';
-            demoRecords.forEach((record, index) => {
-                const card = document.createElement('div');
-                card.className = 'data-card';
-                card.innerHTML = `
-                    <div class="card-content">
-                        <div class="card-row">
-                            <span class="card-label">Employee</span>
-                            <span class="card-value">${record.name}</span>
-                            <span class="card-status"></span>
-                        </div>
-                        <div class="card-row">
-                            <span class="card-label">Hours</span>
-                            <span class="card-value">${record.hours}h</span>
-                        </div>
-                        <div class="card-row">
-                            <span class="card-label">Date</span>
-                            <span class="card-value">${new Date(record.date).toLocaleDateString()}</span>
-                        </div>
-                        <div class="card-row">
-                            <span class="card-label">Project</span>
-                            <span class="card-value">${record.project}</span>
-                        </div>
-                    </div>
-                `;
- 
-                card.addEventListener('click', () => {
-                    document.querySelectorAll('.data-card').forEach(c => c.classList.remove('active'));
-                    card.classList.add('active');
-                    populateForm(record, index);
-                });
- 
-                dataStream.appendChild(card);
+
+        function addTableRow(rowNum) {
+            const row = document.createElement('tr');
+            row.className = 'data-row';
+            row.dataset.rowNum = rowNum;
+
+            row.innerHTML = `
+                <td class="row-number">${rowNum}</td>
+                <td>
+                    <input 
+                        type="text" 
+                        class="input-field" 
+                        placeholder="John Doe"
+                        id="row-${rowNum}-name"
+                        name="row-${rowNum}-name"
+                    />
+                </td>
+                <td>
+                    <input 
+                        type="number" 
+                        class="input-field" 
+                        placeholder="2.5"
+                        id="row-${rowNum}-hours"
+                        name="row-${rowNum}-hours"
+                        step="0.5"
+                        min="0"
+                        max="24"
+                    />
+                </td>
+                <td>
+                    <input 
+                        type="date" 
+                        class="input-field" 
+                        id="row-${rowNum}-date"
+                        name="row-${rowNum}-date"
+                    />
+                </td>
+                <td>
+                    <input 
+                        type="text" 
+                        class="input-field" 
+                        placeholder="Project Alpha"
+                        id="row-${rowNum}-project"
+                        name="row-${rowNum}-project"
+                    />
+                </td>
+                <td>
+                    <input 
+                        type="text" 
+                        class="input-field" 
+                        placeholder="Additional notes..."
+                        id="row-${rowNum}-notes"
+                        name="row-${rowNum}-notes"
+                    />
+                </td>
+            `;
+
+            tableBody.appendChild(row);
+        }
+
+        // Add new row
+        addRowBtn.addEventListener('click', function() {
+            const currentRows = tableBody.querySelectorAll('.data-row');
+            const newRowNum = currentRows.length + 1;
+            addTableRow(newRowNum);
+        });
+
+        // Remove last row
+        removeRowBtn.addEventListener('click', function() {
+            const rows = tableBody.querySelectorAll('.data-row');
+            if (rows.length > 1) {
+                rows[rows.length - 1].remove();
+            }
+        });
+
+        // Submit button handler
+        submitBtn.addEventListener('click', function() {
+            const rows = tableBody.querySelectorAll('.data-row');
+            const data = [];
+            let isValid = true;
+
+            rows.forEach((row, index) => {
+                const rowNum = index + 1;
+                const name = document.getElementById(`row-${rowNum}-name`).value.trim();
+                const hours = document.getElementById(`row-${rowNum}-hours`).value.trim();
+                const date = document.getElementById(`row-${rowNum}-date`).value;
+                const project = document.getElementById(`row-${rowNum}-project`).value.trim();
+                const notes = document.getElementById(`row-${rowNum}-notes`).value.trim();
+
+                if (name && hours && date && project) {
+                    data.push({ name, hours, date, project, notes });
+                } else if (name || hours || date || project || notes) {
+                    isValid = false;
+                }
             });
- 
-            cardCount.textContent = demoRecords.length;
-        }
- 
-        // Populate form with selected record data
-        function populateForm(record, index) {
-            document.getElementById('emp-name').value = record.name;
-            document.getElementById('ot-hours').value = record.hours;
-            document.getElementById('ot-date').value = record.date;
-            document.getElementById('project-name').value = record.project;
-            document.getElementById('notes').value = record.notes;
- 
-            // Simulate automation log activity
-            automationLog.log(`[${index + 1}/${demoRecords.length}] Loading record: ${record.name}`, 'info');
-            automationLog.log(`✓ All fields populated for ${record.name}`, 'success');
-        }
- 
-        // Form submission handler
-        document.getElementById('activityForm').addEventListener('submit', (e) => {
-            e.preventDefault();
- 
-            const empName = document.getElementById('emp-name').value;
-            
-            automationLog.log(`Submitting entry for: ${empName}`, 'info');
-            
-            // Simulate submission delay
+
+            if (!isValid) {
+                alert('Please fill all required fields in each row with data, or leave a row completely empty.');
+                return;
+            }
+
+            if (data.length === 0) {
+                alert('Please enter at least one employee record.');
+                return;
+            }
+
+            // Simulate form submission
+            console.log('Submitted data:', data);
+            successMsg.classList.add('show');
             setTimeout(() => {
-                automationLog.log(`✓ SUCCESS: ${empName}'s overtime entry submitted`, 'success');
-                
-                // Mark card as completed
-                const cards = document.querySelectorAll('.data-card');
-                cards.forEach(card => {
-                    if (card.classList.contains('active')) {
-                        const statusDot = card.querySelector('.card-status');
-                        statusDot.classList.add('completed');
-                        card.classList.remove('active');
-                    }
-                });
- 
-                // Reset form
-                document.getElementById('activityForm').reset();
-                automationLog.log(`Ready for next entry...`, 'info');
-            }, 800);
+                successMsg.classList.remove('show');
+            }, 4000);
         });
- 
-        // Initialize on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            initializeDemoData();
-            automationLog.log('System initialized', 'info');
-            automationLog.log(`Loaded ${demoRecords.length} pending records`, 'info');
-            automationLog.hide();
-        });
- 
-        // Expose automation log to Selenium script
-        window.automationLog = automationLog;
-        window.populateForm = populateForm;
+
+        // Initialize
+        initializeTable();
     </script>
 </body>
 </html>
